@@ -32,3 +32,17 @@
 - [x] 5.8 文件选择后不自动提交，改为手动点击按钮
 
 ---
+
+## 迁移：智谱 AI → 阿里云百炼 DashScope
+
+- [x] 6.1 更新 `.env.local` — ZHIPU_API_KEY → DASHSCOPE_API_KEY
+- [x] 6.2 创建 `src/lib/dashscope.ts` — DashScope API 客户端（voice enrollment + TTS）
+- [x] 6.3 更新 `src/lib/api-helpers.ts` — ZhipuError → DashScopeError
+- [x] 6.4 更新 DB schema — 默认 model 改为 qwen-voice-enrollment
+- [x] 6.5 重写 `POST /api/voices/clone` — base64 音频直传百炼
+- [x] 6.6 重写 `POST /api/tts` — multimodal-generation 端点
+- [x] 6.7 更新 `GET /api/voices/public` — 百炼系统音色列表
+- [x] 6.8 更新前端页面 — 移除智谱引用，rename zhipuVoiceId → apiVoiceId
+- [x] 6.9 删除 `src/lib/zhipu.ts` 和旧文档
+- [x] 6.10 更新 CLAUDE.md — 技术栈和架构文档
+- [x] 6.11 TypeScript 类型检查通过（零错误）

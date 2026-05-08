@@ -4,7 +4,7 @@ export const clonedVoices = sqliteTable("cloned_voices", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
   voice_id: text("voice_id").unique(),
-  model: text("model").notNull().default("glm-tts-clone"),
+  model: text("model").notNull().default("qwen-voice-enrollment"),
   status: text("status").notNull().default("pending"),
   demo_audio_url: text("demo_audio_url"),
   audio_file_path: text("audio_file_path"),

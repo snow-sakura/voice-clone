@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { join } from "path";
 import { writeFile, mkdir } from "fs/promises";
 import { randomUUID } from "crypto";
-import { getZhipuClient } from "../../../../lib/zhipu";
+import { getDashScopeClient } from "../../../../lib/dashscope";
 import { createVoice, updateVoiceOnComplete, updateVoiceOnFail } from "../../../../db/queries";
 import { handleApiError } from "../../../../lib/api-helpers";
 
@@ -12,8 +12,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const audio = formData.get("audio");
     const voiceName = formData.get("voiceName");
-    const text = formData.get("text");
-    const input = formData.get("input");
 
     // Validate required fields
     if (!audio || !(audio instanceof Blob)) {
@@ -28,22 +26,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         { status: 400 },
       );
     }
-    if (!text || !text.toString().trim()) {
-      return NextResponse.json(
-        { error: "Missing required field: text (audio transcript)" },
-        { status: 400 },
-      );
-    }
-    if (!input || !input.toString().trim()) {
-      return NextResponse.json(
-        { error: "Missing required field: input (demo text)" },
-        { status: 400 },
-      );
-    }
-
     const voiceNameStr = voiceName.toString().trim();
-    const textStr = text.toString().trim();
-    const inputStr = input.toString().trim();
 
     // Validate file extension
     const extension = audio.name ? audio.name.split(".").pop()?.toLowerCase() : "";
@@ -68,52 +51,56 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const uploadsDir = join(process.cwd(), "public", "uploads");
     await mkdir(uploadsDir, { recursive: true });
 
-    // Generate a unique filename and save the uploaded audio file
+    // Save the uploaded audio file locally
     const filename = `voice-${randomUUID()}.${extension}`;
     const filePath = join(uploadsDir, filename);
 
     const buffer = Buffer.from(await audio.arrayBuffer());
     await writeFile(filePath, buffer);
 
-    // Save the relative path for storage
     const savedFilePath = `/uploads/${filename}`;
 
+    // Determine MIME type for the DashScope API
+    const mimeTypes: Record<string, string> = {
+      wav: "audio/wav",
+      mp3: "audio/mpeg",
+      flac: "audio/flac",
+      m4a: "audio/mp4",
+      aac: "audio/aac",
+      ogg: "audio/ogg",
+      webm: "audio/webm",
+    };
+    const mimeType = mimeTypes[extension] ?? "audio/wav";
+
     // Save initial DB record (status: "pending")
-    const dbVoice = await createVoice(voiceNameStr, "glm-tts-clone", savedFilePath);
+    const dbVoice = await createVoice(voiceNameStr, "qwen-voice-enrollment", savedFilePath);
 
-    // Call Zhipu AI to clone the voice
+    // Call DashScope to clone the voice (single API call with base64 audio)
     try {
-      const client = getZhipuClient();
+      const client = getDashScopeClient();
+      const audioBase64 = buffer.toString("base64");
 
-      // Step 1: Upload the reference audio file to Zhipu
-      const uploadResult = await client.uploadFile(filePath);
-      console.log("[clone] Zhipu upload result:", JSON.stringify(uploadResult, null, 2));
-
-      // Step 2: Clone the voice using the uploaded file_id
       const cloneResult = await client.voiceClone({
         voiceName: voiceNameStr,
-        text: textStr,
-        input: inputStr,
-        fileId: uploadResult.id,
-        model: "glm-tts-clone",
+        audioBase64,
+        audioMimeType: mimeType,
       });
-      console.log("[clone] Zhipu clone result:", JSON.stringify(cloneResult, null, 2));
 
-      const { voice_id, audio_url } = cloneResult;
+      console.log("[clone] DashScope clone result:", JSON.stringify(cloneResult, null, 2));
 
       // Mark voice as completed in the database
-      await updateVoiceOnComplete(dbVoice.id, voice_id, audio_url ?? "");
+      await updateVoiceOnComplete(dbVoice.id, cloneResult.voiceId, cloneResult.previewAudioUrl ?? "");
 
       return NextResponse.json({
         success: true,
         voiceId: dbVoice.id,
-        zhipuVoiceId: voice_id,
-        demoAudioUrl: audio_url,
+        apiVoiceId: cloneResult.voiceId,
+        demoAudioUrl: cloneResult.previewAudioUrl ?? null,
       });
     } catch (cloneError) {
       const errorMessage =
         cloneError instanceof Error ? cloneError.message : String(cloneError);
-      console.error("[clone] Zhipu clone failed:", errorMessage);
+      console.error("[clone] DashScope clone failed:", errorMessage);
       await updateVoiceOnFail(dbVoice.id, errorMessage);
       throw cloneError;
     }

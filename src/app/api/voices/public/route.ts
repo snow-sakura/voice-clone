@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
 
-// Zhipu AI preset voice list
+// Qwen3-TTS preset voice list (compatible with qwen3-tts-vc-2026-01-22)
 const PRESET_VOICES = [
-  { voice_id: "tongtong", name: "彤彤", description: "女声，温柔自然" },
-  { voice_id: "chuichui", name: "锤锤", description: "男声，沉稳大气" },
-  { voice_id: "xiaochen", name: "小陈", description: "男声，年轻活力" },
-  { voice_id: "xiaoxiao", name: "小小", description: "女声，活泼可爱" },
-  { voice_id: "xiaomo", name: "小墨", description: "男声，沉稳磁性" },
-  { voice_id: "xiaobei", name: "小贝", description: "女声，知性优雅" },
-  { voice_id: "xiaoxuan", name: "小轩", description: "男声，阳光帅气" },
+  { voice_id: "Cherry", name: "Cherry", description: "English female, natural and warm" },
+  { voice_id: "xiaoyun", name: "小云", description: "女声，温柔自然" },
+  { voice_id: "xiaogang", name: "小刚", description: "男声，沉稳大气" },
+  { voice_id: "ruoxi", name: "若兮", description: "女声，知性优雅" },
+  { voice_id: "siyue", name: "四月", description: "女声，活泼可爱" },
+  { voice_id: "ailun", name: "艾伦", description: "男声，阳光帅气" },
 ];
 
 export async function GET(): Promise<NextResponse> {

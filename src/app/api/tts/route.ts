@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { getZhipuClient, ZhipuError } from "../../../lib/zhipu";
+import { getDashScopeClient, DashScopeError } from "../../../lib/dashscope";
 import { saveAudioToLocal } from "../../../lib/audio-helpers";
 
 // ── POST handler ──
@@ -80,8 +80,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // ── Call the Zhipu AI TTS API ──
-    const client = getZhipuClient();
+    // ── Call the DashScope TTS API ──
+    const client = getDashScopeClient();
     const audioBuffer = await client.textToSpeech({
       input: input.trim(),
       voice: voice.trim(),
@@ -107,9 +107,8 @@ export async function POST(request: NextRequest) {
     const message =
       error instanceof Error ? error.message : "Internal server error";
 
-    // Use the status from ZhipuError if available, otherwise default to 500
     const status =
-      error instanceof ZhipuError ? error.status : 500;
+      error instanceof DashScopeError ? error.status : 500;
 
     return NextResponse.json({ error: message }, { status });
   }

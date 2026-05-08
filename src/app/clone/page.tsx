@@ -9,7 +9,7 @@ import { Button } from "../../components/ui/button";
 type CloneState =
   | { phase: "idle" }
   | { phase: "submitting" }
-  | { phase: "completed"; voiceId: number; zhipuVoiceId: string; demoAudioUrl: string; voiceName: string }
+  | { phase: "completed"; voiceId: number; apiVoiceId: string; demoAudioUrl: string; voiceName: string }
   | { phase: "error"; message: string };
 
 // ── Constants ──
@@ -26,7 +26,6 @@ const ACCEPTED_AUDIO_TYPES = [
 ];
 const ACCEPTED_EXTENSIONS = ".mp3,.mp4,.wav,.webm,.ogg,.flac,.m4a,.aac";
 const MAX_FILE_SIZE = 15 * 1024 * 1024; // 15 MB
-const DEFAULT_DEMO_TEXT = "欢迎使用智谱AI音色复刻服务";
 
 function formatFileSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -39,8 +38,6 @@ function formatFileSize(bytes: number): string {
 export default function ClonePage() {
   const [state, setState] = useState<CloneState>({ phase: "idle" });
   const [voiceName, setVoiceName] = useState("");
-  const [text, setText] = useState("");
-  const [input, setInput] = useState(DEFAULT_DEMO_TEXT);
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
@@ -80,20 +77,12 @@ export default function ClonePage() {
       return;
     }
 
-    const trimmedText = text.trim();
-    if (!trimmedText) {
-      toast.error("请输入参考音频文本");
-      return;
-    }
-
     setState({ phase: "submitting" });
 
     try {
       const formData = new FormData();
       formData.append("audio", selectedFile);
       formData.append("voiceName", trimmedVoiceName);
-      formData.append("text", trimmedText);
-      formData.append("input", input.trim() || DEFAULT_DEMO_TEXT);
 
       const res = await fetch("/api/voices/clone", {
         method: "POST",
@@ -114,7 +103,7 @@ export default function ClonePage() {
       setState({
         phase: "completed",
         voiceId: data.voiceId,
-        zhipuVoiceId: data.zhipuVoiceId,
+        apiVoiceId: data.apiVoiceId,
         demoAudioUrl: data.demoAudioUrl,
         voiceName: trimmedVoiceName,
       });
@@ -165,8 +154,6 @@ export default function ClonePage() {
     setState({ phase: "idle" });
     setSelectedFile(null);
     setVoiceName("");
-    setText("");
-    setInput(DEFAULT_DEMO_TEXT);
   }
 
   // ── Render ──
@@ -180,7 +167,7 @@ export default function ClonePage() {
             音色复刻
           </h1>
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-            基于智谱 AI glm-tts-clone 模型，上传一段音频即可复刻专属音色
+            基于阿里云百炼 Qwen3-TTS 模型，上传一段音频即可复刻专属音色
           </p>
         </div>
 
@@ -226,7 +213,7 @@ export default function ClonePage() {
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-500">音色ID</span>
                   <span className="text-sm font-mono text-gray-900 dark:text-gray-100">
-                    {state.zhipuVoiceId}
+                    {state.apiVoiceId}
                   </span>
                 </div>
 
@@ -257,7 +244,7 @@ export default function ClonePage() {
                 </Button>
                 <Button
                   onClick={() => {
-                    navigator.clipboard.writeText(state.zhipuVoiceId);
+                    navigator.clipboard.writeText(state.apiVoiceId);
                     toast.success("音色ID已复制到剪贴板");
                   }}
                   className="flex-1"
@@ -419,7 +406,7 @@ export default function ClonePage() {
                 )}
               </div>
 
-              {/* Text inputs */}
+              {/* Voice name input */}
               <div className="space-y-4">
                 <div>
                   <label
@@ -434,46 +421,6 @@ export default function ClonePage() {
                     value={voiceName}
                     onChange={(e) => setVoiceName(e.target.value)}
                     placeholder="为这个音色取一个名字，如：我的声音"
-                    className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="text"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                  >
-                    参考音频文本 <span className="text-red-500">*</span>
-                  </label>
-                  <p className="text-xs text-gray-400 mb-1">
-                    上传音频对应的文字内容，用于智谱API文本对齐
-                  </p>
-                  <input
-                    id="text"
-                    type="text"
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    placeholder="请输入音频中说话的文字内容"
-                    className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="input"
-                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                  >
-                    试听文本 <span className="text-red-500">*</span>
-                  </label>
-                  <p className="text-xs text-gray-400 mb-1">
-                    用于生成试听音频的演示文本
-                  </p>
-                  <input
-                    id="input"
-                    type="text"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder={DEFAULT_DEMO_TEXT}
                     className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow"
                   />
                 </div>

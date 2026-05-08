@@ -40,7 +40,7 @@ export default function TtsPage() {
   // Form state
   const [text, setText] = useState("")
   const [speed, setSpeed] = useState(1.0)
-  const [volume, setVolume] = useState(0)
+  const [volume, setVolume] = useState(50)
   const [responseFormat, setResponseFormat] = useState("mp3")
 
   // Result state
@@ -316,22 +316,22 @@ export default function TtsPage() {
                     音量
                   </label>
                   <span className="text-xs font-medium text-gray-900">
-                    {volume}
+                    {volume}%
                   </span>
                 </div>
                 <input
                   id="volume"
                   type="range"
-                  min="-10"
-                  max="10"
-                  step="1"
+                  min="0"
+                  max="100"
+                  step="5"
                   value={volume}
                   onChange={(e) => setVolume(parseInt(e.target.value, 10))}
                   className="w-full accent-blue-500"
                 />
                 <div className="flex justify-between text-xs text-gray-400">
-                  <span>-10 dB</span>
-                  <span>+10 dB</span>
+                  <span>0</span>
+                  <span>100</span>
                 </div>
               </div>
 

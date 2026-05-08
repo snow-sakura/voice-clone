@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { ZhipuError } from "./zhipu";
+import { DashScopeError } from "./dashscope";
 
 /**
  * Handle API errors consistently across all routes.
  * Returns a NextResponse with an appropriate HTTP status code and error message.
  */
 export function handleApiError(error: unknown): NextResponse<{ error: string }> {
-  if (error instanceof ZhipuError) {
+  if (error instanceof DashScopeError) {
     return NextResponse.json(
       { error: error.message },
       { status: error.status || 500 },
