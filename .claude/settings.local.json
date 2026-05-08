@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__context7__resolve-library-id",
+      "WebFetch(domain:docs.fish.audio)",
+      "Bash(curl -sL -A \"Mozilla/5.0\" \"https://docs.fish.audio/developer-guide/getting-started/introduction\")",
+      "Bash(curl -sL -A \"Mozilla/5.0\" \"https://docs.fish.audio/api-reference/introduction\")",
+      "mcp__context7__query-docs",
+      "Bash(curl -sL -A \"Mozilla/5.0\" \"https://openapi-doc.shanjian.tv/\")",
+      "Bash(curl -sL -A \"Mozilla/5.0\" \"https://openapi-doc.shanjian.tv/7289363m0\")",
+      "Bash(curl -sL -A \"Mozilla/5.0\" \"https://api.apifox.com/api/v1/projects/6958418/resources/570356?onlineShareType=apidoc&locale=zh-CN\")",
+      "Bash(curl -sL -A \"Mozilla/5.0\" \"https://api.apifox.com/api/v1/share/projects/5465267?locale=zh-CN\")",
+      "WebSearch",
+      "Bash(curl -sL -A \"Mozilla/5.0\" \"https://api.apifox.com/api/v1/share/projects/5465267/overview?locale=zh-CN\")",
+      "Bash(curl -sL -A \"Mozilla/5.0\" \"https://api.apifox.com/api/v1/share/projects/5465267/nodes?locale=zh-CN\")",
+      "Bash(curl -sL -A \"Mozilla/5.0\" \"https://api.apifox.com/api/v1/projects/6958418/resources?locale=zh-CN&page=1&pageSize=50\")",
+      "Bash(curl -sL -A Mozilla/5.0 -H 'Referer: https://openapi-doc.shanjian.tv/' 'https://api.apifox.com/api/v1/share/projects/5465267/nodes?locale=zh-CN')",
+      "Bash(curl -sL -A \"Mozilla/5.0\" \"https://openapi-doc.shanjian.tv/openapi.json\")",
+      "Bash(curl -sL -A \"Mozilla/5.0\" \"https://openapi-doc.shanjian.tv/api.json\")",
+      "Bash(curl -sL -A \"Mozilla/5.0\" \"https://openapi-doc.shanjian.tv/swagger.json\")",
+      "WebFetch(domain:www.shanjian.tv)",
+      "Bash(curl -sL -A Mozilla/5.0 -H 'Referer: https://openapi-doc.shanjian.tv/' 'https://api.apifox.com/api/v1/share-docs/projects/5465267/overview?locale=zh-CN')",
+      "Bash(curl -sL -A \"Mozilla/5.0\" \"https://cdn.apifox.com/docs-site/assets/route-D_6YkXJe.js\")",
+      "Bash(curl -sL -A \"Mozilla/5.0\" \"https://openapi-doc.shanjian.tv/7289369m0\")",
+      "Bash(grep -oE '<script>[^<]{100,}</script>' /Users/snow-sakura/.claude/projects/-Users-snow-sakura-sakura-voice-clone/c96042a6-42f7-4c84-931c-325519782399/tool-results/bz7s1mgrn.txt)",
+      "Bash(curl -sL -A Mozilla/5.0 -H 'Origin: https://openapi-doc.shanjian.tv' -H 'Referer: https://openapi-doc.shanjian.tv/' 'https://api.apifox.com/api/v1/shared-docs/5465267/export?format=openapi30&locale=zh-CN')",
+      "Bash(curl -sL -A Mozilla/5.0 -H 'Referer: https://openapi-doc.shanjian.tv/' 'https://openapi-doc.shanjian.tv/7289369m0?_data=routes%2F_.%24docsId')",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -sL -A Mozilla/5.0 -H 'Referer: https://openapi-doc.shanjian.tv/' 'https://openapi-doc.shanjian.tv/342241374e0?_data=routes%2F_.%24docsId')",
+      "Bash(curl -sL -A Mozilla/5.0 -H 'Origin: https://openapi-doc.shanjian.tv' -H 'Referer: https://openapi-doc.shanjian.tv/7289363m0' 'https://api.apifox.com/api/v1/shared-docs/5465267/export?locale=zh-CN&format=openapi30')",
+      "Bash(curl -sL -A Mozilla/5.0 -H 'Origin: https://openapi-doc.shanjian.tv' -H 'Referer: https://openapi-doc.shanjian.tv/' 'https://api.apifox.com/api/v1/shared-docs/5465267/pages/7289369?locale=zh-CN')",
+      "Bash(curl -sL -A \"Mozilla/5.0\" \"https://cdn.apifox.com/docs-site/assets/client-BKxavTD9.js\")",
+      "Bash(npx create-next-app@latest *)",
+      "Bash(mkdir -p /tmp/voice-clone-backup)",
+      "Bash(cp claude.md todo.md /tmp/voice-clone-backup/)",
+      "Bash(cp -r docs /tmp/voice-clone-backup/)"
+    ]
+  }
+}
