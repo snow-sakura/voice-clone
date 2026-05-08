@@ -2,19 +2,10 @@ import { db } from "./index";
 import { clonedVoices } from "./schema";
 import { eq, desc } from "drizzle-orm";
 
-export async function getVoiceByTaskId(taskId: string) {
-  const [voice] = await db
-    .select()
-    .from(clonedVoices)
-    .where(eq(clonedVoices.task_id, taskId));
-  return voice;
-}
-
 export async function createVoice(
   name: string,
   model: string,
   audioFilePath: string,
-  taskId?: string,
 ) {
   const [voice] = await db
     .insert(clonedVoices)
@@ -22,7 +13,6 @@ export async function createVoice(
       name,
       model,
       audio_file_path: audioFilePath,
-      task_id: taskId || null,
       status: "pending",
     })
     .returning();
@@ -46,31 +36,15 @@ export async function getVoiceById(id: number) {
   return voice;
 }
 
-export async function updateVoiceStatus(
-  id: number,
-  status: "pending" | "processing" | "completed" | "failed",
-) {
-  const [voice] = await db
-    .update(clonedVoices)
-    .set({
-      status,
-      updated_at: new Date().toISOString(),
-    })
-    .where(eq(clonedVoices.id, id))
-    .returning();
-
-  return voice;
-}
-
 export async function updateVoiceOnComplete(
   id: number,
-  speakerId: string,
+  voiceId: string,
   demoAudioUrl: string,
 ) {
   const [voice] = await db
     .update(clonedVoices)
     .set({
-      speaker_id: speakerId,
+      voice_id: voiceId,
       demo_audio_url: demoAudioUrl,
       status: "completed",
       updated_at: new Date().toISOString(),

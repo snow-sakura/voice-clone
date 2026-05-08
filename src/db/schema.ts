@@ -3,9 +3,8 @@ import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 export const clonedVoices = sqliteTable("cloned_voices", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
-  speaker_id: text("speaker_id").unique(),
-  model: text("model").notNull().default("V3"),
-  task_id: text("task_id"),
+  voice_id: text("voice_id").unique(),
+  model: text("model").notNull().default("glm-tts-clone"),
   status: text("status").notNull().default("pending"),
   demo_audio_url: text("demo_audio_url"),
   audio_file_path: text("audio_file_path"),

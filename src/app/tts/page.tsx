@@ -8,7 +8,7 @@ import { toast } from "sonner"
 
 interface VoiceOption {
   id: string
-  speakerId: string
+  voiceId: string
   name: string
   source: "cloned" | "public"
   status?: string
@@ -29,33 +29,19 @@ function formatTimestamp(ms: number): string {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`
 }
 
-/** Try to extract an array from various response shapes the public API might return */
-function extractVoiceList(data: unknown): unknown[] {
-  if (Array.isArray(data)) return data
-  if (data && typeof data === "object") {
-    const d = data as Record<string, unknown>
-    if (Array.isArray(d.data)) return d.data as unknown[]
-    if (Array.isArray(d.list)) return d.list as unknown[]
-    if (Array.isArray(d.voices)) return d.voices as unknown[]
-    if (Array.isArray(d.result)) return d.result as unknown[]
-    if (Array.isArray(d.items)) return d.items as unknown[]
-  }
-  return []
-}
-
 // ── Page Component ──
 
 export default function TtsPage() {
   // Voice state
   const [voices, setVoices] = useState<VoiceOption[]>([])
   const [voicesLoading, setVoicesLoading] = useState(true)
-  const [selectedSpeakerId, setSelectedSpeakerId] = useState("")
+  const [selectedVoiceId, setSelectedVoiceId] = useState("")
 
   // Form state
   const [text, setText] = useState("")
   const [speed, setSpeed] = useState(1.0)
-  const [volume, setVolume] = useState(50)
-  const [format, setFormat] = useState("mp3")
+  const [volume, setVolume] = useState(0)
+  const [responseFormat, setResponseFormat] = useState("mp3")
 
   // Result state
   const [isGenerating, setIsGenerating] = useState(false)
@@ -78,10 +64,10 @@ export default function TtsPage() {
           const data = await res.json()
           if (Array.isArray(data)) {
             for (const v of data) {
-              if (v.speaker_id) {
+              if (v.voice_id) {
                 options.push({
-                  id: `local-${v.id}`,
-                  speakerId: v.speaker_id,
+                  id: `local-${v.voice_id}`,
+                  voiceId: v.voice_id,
                   name: v.name || `Voice ${v.id}`,
                   source: "cloned" as const,
                   status: v.status,
@@ -99,27 +85,17 @@ export default function TtsPage() {
         const res = await fetch("/api/voices/public")
         if (res.ok) {
           const data = await res.json()
-          const list = extractVoiceList(data)
 
-          for (const item of list) {
-            const v = item as Record<string, unknown>
-            const speakerId =
-              (v.speaker_id as string) ??
-              (v.speakerId as string) ??
-              (v.id as string)
-            const name =
-              (v.name as string) ??
-              (v.voice_name as string) ??
-              (v.voiceName as string) ??
-              "公共音色"
-
-            if (speakerId) {
-              options.push({
-                id: `public-${speakerId}`,
-                speakerId,
-                name,
-                source: "public" as const,
-              })
+          if (Array.isArray(data)) {
+            for (const v of data) {
+              if (v.voice_id) {
+                options.push({
+                  id: `public-${v.voice_id}`,
+                  voiceId: v.voice_id,
+                  name: v.name || "公共音色",
+                  source: "public" as const,
+                })
+              }
             }
           }
         }
@@ -130,7 +106,7 @@ export default function TtsPage() {
       if (!cancelled) {
         setVoices(options)
         if (options.length > 0) {
-          setSelectedSpeakerId((prev) => prev || options[0].speakerId)
+          setSelectedVoiceId((prev) => prev || options[0].voiceId)
         }
         setVoicesLoading(false)
       }
@@ -148,7 +124,7 @@ export default function TtsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!text.trim() || !selectedSpeakerId) return
+    if (!text.trim() || !selectedVoiceId) return
 
     setIsGenerating(true)
     setAudioUrl(null)
@@ -159,11 +135,11 @@ export default function TtsPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          text: text.trim(),
-          speakerId: selectedSpeakerId,
+          input: text.trim(),
+          voice: selectedVoiceId,
           speed,
           volume,
-          format,
+          responseFormat,
         }),
       })
 
@@ -196,7 +172,7 @@ export default function TtsPage() {
   // ── Derived state ──
 
   const canSubmit =
-    text.trim().length > 0 && selectedSpeakerId !== "" && !isGenerating
+    text.trim().length > 0 && selectedVoiceId !== "" && !isGenerating
 
   // ── Render ──
 
@@ -254,12 +230,12 @@ export default function TtsPage() {
             ) : (
               <select
                 id="voice"
-                value={selectedSpeakerId}
-                onChange={(e) => setSelectedSpeakerId(e.target.value)}
+                value={selectedVoiceId}
+                onChange={(e) => setSelectedVoiceId(e.target.value)}
                 className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
               >
                 {voices.map((voice) => (
-                  <option key={voice.id} value={voice.speakerId}>
+                  <option key={voice.id} value={voice.voiceId}>
                     {voice.name}
                     {voice.source === "cloned"
                       ? voice.status === "completed"
@@ -346,31 +322,31 @@ export default function TtsPage() {
                 <input
                   id="volume"
                   type="range"
-                  min="0"
-                  max="100"
+                  min="-10"
+                  max="10"
                   step="1"
                   value={volume}
                   onChange={(e) => setVolume(parseInt(e.target.value, 10))}
                   className="w-full accent-blue-500"
                 />
                 <div className="flex justify-between text-xs text-gray-400">
-                  <span>0</span>
-                  <span>100</span>
+                  <span>-10 dB</span>
+                  <span>+10 dB</span>
                 </div>
               </div>
 
               {/* Format */}
               <div>
                 <label
-                  htmlFor="format"
+                  htmlFor="responseFormat"
                   className="mb-1 block text-xs text-gray-600"
                 >
                   输出格式
                 </label>
                 <select
-                  id="format"
-                  value={format}
-                  onChange={(e) => setFormat(e.target.value)}
+                  id="responseFormat"
+                  value={responseFormat}
+                  onChange={(e) => setResponseFormat(e.target.value)}
                   className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                 >
                   <option value="mp3">MP3</option>

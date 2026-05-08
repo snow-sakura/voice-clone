@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
-import { ShanJianError } from "./shanjian";
+import { ZhipuError } from "./zhipu";
 
 /**
  * Handle API errors consistently across all routes.
  * Returns a NextResponse with an appropriate HTTP status code and error message.
  */
 export function handleApiError(error: unknown): NextResponse<{ error: string }> {
-  if (error instanceof ShanJianError) {
+  if (error instanceof ZhipuError) {
     return NextResponse.json(
       { error: error.message },
-      { status: error.status },
+      { status: error.status || 500 },
     );
   }
 
