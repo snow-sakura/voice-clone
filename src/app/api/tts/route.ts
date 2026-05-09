@@ -47,37 +47,22 @@ export async function POST(request: NextRequest) {
       model = body.model;
     }
 
-    let responseFormat: string | undefined;
-    if (body.responseFormat !== undefined) {
-      if (typeof body.responseFormat !== "string") {
-        return NextResponse.json(
-          { error: "Field 'responseFormat' must be a string" },
-          { status: 400 },
-        );
-      }
-      responseFormat = body.responseFormat;
+    // Auto-select model based on voice ID type
+    if (!model) {
+      model = voice.trim().startsWith("qwen-tts-vc-")
+        ? "qwen3-tts-vc-2026-01-22"
+        : "qwen-tts-2025-05-22";
     }
 
-    let speed: number | undefined;
-    if (body.speed !== undefined) {
-      speed = Number(body.speed);
-      if (isNaN(speed)) {
+    let languageType: string | undefined;
+    if (body.languageType !== undefined) {
+      if (typeof body.languageType !== "string") {
         return NextResponse.json(
-          { error: "Field 'speed' must be a number" },
+          { error: "Field 'languageType' must be a string" },
           { status: 400 },
         );
       }
-    }
-
-    let volume: number | undefined;
-    if (body.volume !== undefined) {
-      volume = Number(body.volume);
-      if (isNaN(volume)) {
-        return NextResponse.json(
-          { error: "Field 'volume' must be a number" },
-          { status: 400 },
-        );
-      }
+      languageType = body.languageType;
     }
 
     // ── Call the DashScope TTS API ──
@@ -86,14 +71,11 @@ export async function POST(request: NextRequest) {
       input: input.trim(),
       voice: voice.trim(),
       model,
-      responseFormat,
-      speed,
-      volume,
+      languageType,
     });
 
     // ── Save audio to local public/tts_output directory ──
-    const ext = responseFormat ?? "wav";
-    const filename = `${randomUUID()}.${ext}`;
+    const filename = `${randomUUID()}.wav`;
     const audioUrl = await saveAudioToLocal(audioBuffer, filename);
 
     // ── Return success ──

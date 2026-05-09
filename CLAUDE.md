@@ -13,6 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 npm run dev          # 启动开发服务器 (localhost:3000)
 npm run build        # 生产构建
+npm run start        # 生产模式启动
 npm run lint         # ESLint 检查
 npx tsc --noEmit     # TypeScript 类型检查
 npx drizzle-kit generate --name "xxx"  # 生成数据库迁移
@@ -35,9 +36,9 @@ npx drizzle-kit push # 应用数据库迁移到 SQLite
 浏览器 ──→ Next.js 前端 (React 19 + shadcn/ui)
                 │
                 ├── POST /api/voices/clone  ──→ SQLite ──→ 百炼 /audio/tts/customization (base64 音频直传)
-                ├── GET  /api/voices         ──→ SQLite (列表)
+                ├── GET  /api/voices         ──→ SQLite + preset-voices.ts (分页/tab过滤/混合)
                 ├── DEL  /api/voices/[id]    ──→ SQLite (删除)
-                ├── GET  /api/voices/public  ──→ 硬编码预设音色列表
+                ├── GET  /api/voices/public  ──→ preset-voices.ts 预设音色列表
                 └── POST /api/tts            ──→ 百炼 /aigc/multimodal-generation/generation → 音频 → public/tts_output/
 ```
 
@@ -67,8 +68,10 @@ npx drizzle-kit push # 应用数据库迁移到 SQLite
 | `src/lib/dashscope.ts` | 百炼 API 客户端（voice enrollment + TTS），参数 camelCase |
 | `src/lib/audio-helpers.ts` | 音频持久化，支持 URL/base64/Buffer → `public/tts_output/` |
 | `src/lib/api-helpers.ts` | `handleApiError()` 统一错误处理，`validateRequired()` 参数校验 |
-| `src/db/queries.ts` | 数据库 CRUD 操作（createVoice, updateVoiceOnComplete/Fail 等） |
+| `src/lib/preset-voices.ts` | 预设音色列表（Cherry, Serena, Ethan 等 7 个），供 `/api/voices` 和 `/api/voices/public` 共用 |
+| `src/db/queries.ts` | 数据库 CRUD 操作（createVoice, getVoicesPaginated, updateVoiceOnComplete/Fail 等） |
 | `src/db/schema.ts` | Drizzle ORM schema，单表 `cloned_voices` |
+| `src/components/voice-list.tsx` | 音色列表共享组件，支持 tab 切换（全部/已克隆/预设）、分页、删除 |
 
 ## 注意事项 / 陷阱
 
@@ -76,6 +79,8 @@ npx drizzle-kit push # 应用数据库迁移到 SQLite
 - **TTS 响应格式**：`multimodal-generation/generation` 端点返回格式不确定，`extractAudioBuffer()` 按优先级尝试 5 种格式：`choices[].message.content[].audio` → `output.audio.url` → `output.audio.data` → `output.audio` 字符串 → 根级 `audio_url`。调试时可以查看实际返回的 JSON 结构。
 - **音量范围**：前端滑块 0~100（百炼格式），不是分贝。默认值 50。
 - **API 端点差异**：voice enrollment 用 `/services/audio/tts/customization`，TTS 用 `/services/aigc/multimodal-generation/generation`。注意不是同一个路径前缀。
+- **音色列表混合逻辑**：`GET /api/voices?tab=all` 时，第 1 页返回「预设 + 已克隆」混合列表，后续页仅返回已克隆。`tab=preset` 不分页（全部返回）。实现见 `src/app/api/voices/route.ts`。
+- **VoiceList 组件**：`src/components/voice-list.tsx` 在 `/clone` 和 `/tts` 页面中共用，通过 `VoiceItem.source` 区分 `"cloned"` vs `"preset"`，预设音色无 `id`（`id: null`），删除按钮仅对已克隆音色显示。
 
 ## 项目约定
 

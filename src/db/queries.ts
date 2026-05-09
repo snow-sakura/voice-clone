@@ -1,6 +1,6 @@
 import { db } from "./index";
 import { clonedVoices } from "./schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 
 export async function createVoice(
   name: string,
@@ -25,6 +25,26 @@ export async function getVoices() {
     .select()
     .from(clonedVoices)
     .orderBy(desc(clonedVoices.created_at));
+}
+
+export async function getVoicesPaginated(page: number, pageSize: number) {
+  const offset = (page - 1) * pageSize;
+
+  const [items, totalResult] = await Promise.all([
+    db
+      .select()
+      .from(clonedVoices)
+      .orderBy(desc(clonedVoices.created_at))
+      .limit(pageSize)
+      .offset(offset),
+    db
+      .select({ count: sql<number>`count(*)` })
+      .from(clonedVoices),
+  ]);
+
+  const total = Number(totalResult[0]?.count ?? 0);
+
+  return { items, total };
 }
 
 export async function getVoiceById(id: number) {

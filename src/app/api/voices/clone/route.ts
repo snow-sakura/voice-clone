@@ -30,7 +30,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Validate file extension
     const extension = audio.name ? audio.name.split(".").pop()?.toLowerCase() : "";
-    const allowedExtensions = ["wav", "mp3", "flac", "m4a", "aac", "ogg", "webm"];
+    const allowedExtensions = ["wav", "mp3"];
     if (!extension || !allowedExtensions.includes(extension)) {
       return NextResponse.json(
         { error: `Unsupported audio format: ${extension || "unknown"}. Supported: ${allowedExtensions.join(", ")}` },
@@ -64,11 +64,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const mimeTypes: Record<string, string> = {
       wav: "audio/wav",
       mp3: "audio/mpeg",
-      flac: "audio/flac",
-      m4a: "audio/mp4",
-      aac: "audio/aac",
-      ogg: "audio/ogg",
-      webm: "audio/webm",
     };
     const mimeType = mimeTypes[extension] ?? "audio/wav";
 

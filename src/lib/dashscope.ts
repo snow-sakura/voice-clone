@@ -25,15 +25,7 @@ export interface TextToSpeechParams {
   voice: string
   /** Model (default: qwen3-tts-vc-2026-01-22) */
   model?: string
-  /** Output audio format: wav or mp3 (default: wav) */
-  responseFormat?: string
-  /** Speech speed 0.5~2.0 (default: 1.0) */
-  speed?: number
-  /** Volume 0~100 (default: 50) */
-  volume?: number
-  /** Sample rate: 8000, 16000, 22050, 24000, 44100, 48000 (default: 24000) */
-  sampleRate?: number
-  /** Language hint: zh, en, etc. */
+  /** Language hint: Auto / Chinese / English / Japanese / Korean / etc. */
   languageType?: string
 }
 
@@ -93,8 +85,11 @@ export class DashScope {
     let errorMessage = `API request failed with status ${response.status}: ${response.statusText}`
     let errorCode: string | undefined
 
+    let rawBody = ""
     try {
-      const errorBody = await response.json()
+      rawBody = await response.text()
+      const errorBody = JSON.parse(rawBody)
+      console.error("[DashScope] Error response body:", JSON.stringify(errorBody, null, 2))
       if (errorBody?.code) {
         errorCode = errorBody.code
       }
@@ -102,7 +97,7 @@ export class DashScope {
         errorMessage = errorBody.message
       }
     } catch {
-      // Response body is not JSON — use the default message
+      console.error("[DashScope] Error response (non-JSON):", rawBody)
     }
 
     return new DashScopeError(errorMessage, response.status, errorCode)
@@ -217,18 +212,6 @@ export class DashScope {
     const input: Record<string, unknown> = {
       text: params.input,
       voice: params.voice,
-    }
-    if (params.responseFormat) {
-      input.format = params.responseFormat
-    }
-    if (params.speed !== undefined) {
-      input.rate = params.speed
-    }
-    if (params.volume !== undefined) {
-      input.volume = params.volume
-    }
-    if (params.sampleRate !== undefined) {
-      input.sample_rate = params.sampleRate
     }
     if (params.languageType) {
       input.language_type = params.languageType
