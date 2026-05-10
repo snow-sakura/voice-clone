@@ -1,76 +1,106 @@
 import { NextRequest, NextResponse } from "next/server";
-import { join } from "path";
 import { writeFile, mkdir } from "fs/promises";
 import { randomUUID } from "crypto";
-import { getDashScopeClient } from "../../../../lib/dashscope";
-import { createVoice, updateVoiceOnComplete, updateVoiceOnFail } from "../../../../db/queries";
-import { handleApiError } from "../../../../lib/api-helpers";
+import { getDashScopeClient } from "@/lib/dashscope";
+import { createVoice, updateVoiceOnComplete, updateVoiceOnFail, createActivity } from "@/db/queries";
+import { handleApiError } from "@/lib/api-helpers";
+import { getCurrentUser } from "@/lib/auth";
+import { getUploadsPath, getUploadsApiPath } from "@/lib/audio-helpers";
+
+// 允许的文件类型配置
+const ALLOWED_CONFIG = {
+  extensions: ["wav", "mp3"] as const,
+  mimeTypes: {
+    wav: "audio/wav",
+    mp3: "audio/mpeg",
+  } as const,
+  maxFileSize: 15 * 1024 * 1024, // 15MB
+};
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
+    // 验证用户登录
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "请先登录" }, { status: 401 });
+    }
+
     const formData = await request.formData();
 
     const audio = formData.get("audio");
     const voiceName = formData.get("voiceName");
 
-    // Validate required fields
+    // 验证必填字段
     if (!audio || !(audio instanceof Blob)) {
       return NextResponse.json(
-        { error: "Missing required field: audio (file)" },
+        { error: "缺少音频文件" },
         { status: 400 },
       );
     }
     if (!voiceName || !voiceName.toString().trim()) {
       return NextResponse.json(
-        { error: "Missing required field: voiceName" },
+        { error: "缺少音色名称" },
         { status: 400 },
       );
     }
     const voiceNameStr = voiceName.toString().trim();
 
-    // Validate file extension
-    const extension = audio.name ? audio.name.split(".").pop()?.toLowerCase() : "";
-    const allowedExtensions = ["wav", "mp3"];
-    if (!extension || !allowedExtensions.includes(extension)) {
+    // 验证文件扩展名（安全处理）
+    const fileName = audio.name || "";
+    const extension = fileName.split(".").pop()?.toLowerCase() || "";
+
+    // 安全检查：扩展名必须只包含字母数字
+    if (!extension || !/^[a-z0-9]+$/i.test(extension)) {
       return NextResponse.json(
-        { error: `Unsupported audio format: ${extension || "unknown"}. Supported: ${allowedExtensions.join(", ")}` },
+        { error: "无效的文件扩展名" },
+        { status: 400 },
+      );
+    }
+    if (!ALLOWED_CONFIG.extensions.includes(extension as "wav" | "mp3")) {
+      return NextResponse.json(
+        { error: `不支持的音频格式: ${extension}。支持: ${ALLOWED_CONFIG.extensions.join(", ")}` },
         { status: 400 },
       );
     }
 
-    // Validate file size (max 15MB)
-    const MAX_FILE_SIZE = 15 * 1024 * 1024;
-    if (audio.size > MAX_FILE_SIZE) {
+    // 验证 MIME 类型
+    const allowedMimeTypes = ["audio/mpeg", "audio/wav", "audio/x-wav", "audio/mp3"];
+    if (audio.type && !allowedMimeTypes.includes(audio.type)) {
       return NextResponse.json(
-        { error: `File too large: ${(audio.size / 1024 / 1024).toFixed(1)}MB. Maximum: 15MB` },
+        { error: `不支持的文件类型: ${audio.type}` },
         { status: 400 },
       );
     }
 
-    // Ensure the uploads directory exists
-    const uploadsDir = join(process.cwd(), "public", "uploads");
+    // 验证文件大小
+    if (audio.size > ALLOWED_CONFIG.maxFileSize) {
+      return NextResponse.json(
+        { error: `文件过大: ${(audio.size / 1024 / 1024).toFixed(1)}MB。最大: 15MB` },
+        { status: 400 },
+      );
+    }
+
+    // 确保上传目录存在
+    const uploadsDir = getUploadsPath("");
     await mkdir(uploadsDir, { recursive: true });
 
-    // Save the uploaded audio file locally
+    // 使用 UUID 生成安全的文件名
     const filename = `voice-${randomUUID()}.${extension}`;
-    const filePath = join(uploadsDir, filename);
+    const filePath = getUploadsPath(filename);
 
     const buffer = Buffer.from(await audio.arrayBuffer());
     await writeFile(filePath, buffer);
 
-    const savedFilePath = `/uploads/${filename}`;
+    // 存储安全的 API 访问路径
+    const savedFilePath = getUploadsApiPath(filename);
 
-    // Determine MIME type for the DashScope API
-    const mimeTypes: Record<string, string> = {
-      wav: "audio/wav",
-      mp3: "audio/mpeg",
-    };
-    const mimeType = mimeTypes[extension] ?? "audio/wav";
+    // 获取 MIME 类型
+    const mimeType = ALLOWED_CONFIG.mimeTypes[extension as keyof typeof ALLOWED_CONFIG.mimeTypes] ?? "audio/wav";
 
-    // Save initial DB record (status: "pending")
-    const dbVoice = await createVoice(voiceNameStr, "qwen-voice-enrollment", savedFilePath);
+    // 保存初始数据库记录（状态: "pending"）
+    const dbVoice = await createVoice(voiceNameStr, "qwen-voice-enrollment", savedFilePath, user.id);
 
-    // Call DashScope to clone the voice (single API call with base64 audio)
+    // 调用 DashScope API 进行音色克隆
     try {
       const client = getDashScopeClient();
       const audioBase64 = buffer.toString("base64");
@@ -83,8 +113,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       console.log("[clone] DashScope clone result:", JSON.stringify(cloneResult, null, 2));
 
-      // Mark voice as completed in the database
+      // 更新数据库状态为完成
       await updateVoiceOnComplete(dbVoice.id, cloneResult.voiceId, cloneResult.previewAudioUrl ?? "");
+
+      // 记录活动
+      await createActivity(user.id, "clone", `克隆音色「${voiceNameStr}」`, {
+        voiceId: dbVoice.id,
+        apiVoiceId: cloneResult.voiceId,
+      });
 
       return NextResponse.json({
         success: true,

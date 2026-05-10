@@ -59,7 +59,21 @@
       "WebFetch(domain:www.alibabacloud.com)",
       "Bash(git restore *)",
       "Bash(kill 5186 *)",
-      "Bash(kill *)"
+      "Bash(kill *)",
+      "mcp__browser-tools__takeScreenshot",
+      "mcp__browser-tools__getConsoleErrors",
+      "mcp__browser-tools__getConsoleLogs",
+      "mcp__browser-tools__getNetworkErrors",
+      "mcp__browser-tools__getSelectedElement",
+      "Bash(npm run *)",
+      "mcp__browser-tools__getNetworkLogs",
+      "WebFetch(domain:www.yuntts.com)",
+      "Bash(curl -s -X POST http://localhost:3000/api/tts -H 'Content-Type: application/json' -d '{\"input\":\"你好，今天天气真好\",\"voice\":\"Cherry\"}')",
+      "Bash(curl *)",
+      "Bash(grep *)",
+      "Bash(git *)",
+      "Bash(file *)",
+      "Bash(node *)"
     ]
   }
 }

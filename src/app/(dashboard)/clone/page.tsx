@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef, useEffect, type DragEvent, type ChangeEvent } from "react";
+import { useState, useRef, useEffect, useMemo, type DragEvent, type ChangeEvent } from "react";
 import { toast } from "sonner";
-import { Button } from "../../components/ui/button";
-import { VoiceList } from "../../components/voice-list";
+import { Button } from "@/components/ui/button";
+import { VoiceList } from "@/components/voice-list";
 
 // ── Types ──
 
@@ -34,22 +34,49 @@ function formatDuration(seconds: number): string {
   return `${s}秒`;
 }
 
+// 获取音频时长（带超时处理）
+const AUDIO_DURATION_TIMEOUT = 10000; // 10 秒超时
+
 async function getAudioDuration(file: File): Promise<number | null> {
   return new Promise((resolve) => {
     const url = URL.createObjectURL(file);
     const audio = new Audio(url);
+    let resolved = false;
+
+    // 超时处理
+    const timeoutId = setTimeout(() => {
+      if (!resolved) {
+        resolved = true;
+        URL.revokeObjectURL(url);
+        audio.src = ""; // 释放资源
+        resolve(null);
+      }
+    }, AUDIO_DURATION_TIMEOUT);
+
     audio.addEventListener("loadedmetadata", () => {
-      URL.revokeObjectURL(url);
-      if (Number.isFinite(audio.duration) && audio.duration > 0) {
-        resolve(Math.round(audio.duration));
-      } else {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timeoutId);
+        URL.revokeObjectURL(url);
+        if (Number.isFinite(audio.duration) && audio.duration > 0) {
+          resolve(Math.round(audio.duration));
+        } else {
+          resolve(null);
+        }
+      }
+    });
+
+    audio.addEventListener("error", () => {
+      if (!resolved) {
+        resolved = true;
+        clearTimeout(timeoutId);
+        URL.revokeObjectURL(url);
         resolve(null);
       }
     });
-    audio.addEventListener("error", () => {
-      URL.revokeObjectURL(url);
-      resolve(null);
-    });
+
+    // 触发加载
+    audio.load();
   });
 }
 
@@ -87,15 +114,6 @@ function XCircleIcon({ className }: { className?: string }) {
   );
 }
 
-function Spinner() {
-  return (
-    <svg className="size-5 animate-spin" viewBox="0 0 24 24" fill="none">
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-    </svg>
-  );
-}
-
 // ── Component ──
 
 export default function ClonePage() {
@@ -122,29 +140,40 @@ export default function ClonePage() {
         }
         setExistingNames(names);
       })
-      .catch(() => {});
+      .catch((err) => {
+        console.error("获取已有音色名称失败:", err);
+        // 即使获取失败也不影响用户继续使用，仅不进行重名检测
+        setExistingNames(new Set());
+      });
   }, []);
 
   const trimmedName = voiceName.trim();
   const nameDuplicate = trimmedName.length > 0 && existingNames.has(trimmedName.toLowerCase());
 
-  const suggestions: string[] = [];
-  if (nameDuplicate) {
+  // 使用 useMemo 避免在渲染期间调用 Math.random()
+  const suggestions: string[] = useMemo(() => {
+    if (!nameDuplicate) return [];
+    const result: string[] = [];
     for (let i = 1; i <= 5; i++) {
       const candidate = `${trimmedName}-${i}`;
       if (!existingNames.has(candidate.toLowerCase())) {
-        suggestions.push(candidate);
-        if (suggestions.length >= 3) break;
+        result.push(candidate);
+        if (result.length >= 3) break;
       }
     }
-    while (suggestions.length < 3) {
-      const suffix = Math.random().toString(36).slice(2, 5);
+    // 使用固定模式生成更多建议（避免使用不纯函数）
+    let suffixIndex = 1;
+    const MAX_ITERATIONS = 20; // 防止无限循环
+    while (result.length < 3 && suffixIndex <= MAX_ITERATIONS) {
+      const suffix = `v${suffixIndex}`;
       const candidate = `${trimmedName}-${suffix}`;
       if (!existingNames.has(candidate.toLowerCase())) {
-        suggestions.push(candidate);
+        result.push(candidate);
       }
+      suffixIndex++;
     }
-  }
+    return result;
+  }, [nameDuplicate, trimmedName, existingNames]);
 
   function validateFileTypeAndSize(file: File): string | null {
     if (!ACCEPTED_AUDIO_TYPES.includes(file.type) && file.type !== "") {

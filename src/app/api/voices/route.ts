@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getVoices, getVoicesPaginated } from "../../../db/queries";
-import { handleApiError } from "../../../lib/api-helpers";
-import { PRESET_VOICES } from "../../../lib/preset-voices";
+import { getVoicesPaginated, getVoicesByUserId } from "@/db/queries";
+import { handleApiError } from "@/lib/api-helpers";
+import { PRESET_VOICES } from "@/lib/preset-voices";
+import { getCurrentUser } from "@/lib/auth";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
@@ -9,6 +10,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const tab = searchParams.get("tab") ?? "all";
     const page = Math.max(1, parseInt(searchParams.get("page") ?? "1", 10) || 1);
     const pageSize = Math.min(50, Math.max(1, parseInt(searchParams.get("pageSize") ?? "12", 10) || 12));
+
+    // 获取当前用户
+    const user = await getCurrentUser();
 
     if (tab === "preset") {
       // 预设音色不需要分页（共7个）
@@ -30,8 +34,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       });
     }
 
+    // 获取用户的已克隆音色
+    const { items: voices, total } = user
+      ? await getVoicesByUserId(user.id, page, pageSize)
+      : await getVoicesPaginated(page, pageSize);
+
     if (tab === "cloned") {
-      const { items: voices, total } = await getVoicesPaginated(page, pageSize);
       return NextResponse.json({
         items: voices.map((v) => ({
           id: v.id,
@@ -51,10 +59,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     // tab === "all" — 预设在前，克隆在后，合并返回
-    const [{ items: clonedVoices, total: clonedTotal }] = await Promise.all([
-      getVoicesPaginated(page, pageSize),
-    ]);
-
     const presetItems = PRESET_VOICES.map((v) => ({
       id: null,
       name: v.name,
@@ -66,7 +70,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       createdAt: null,
     }));
 
-    const clonedItems = clonedVoices.map((v) => ({
+    const clonedItems = voices.map((v) => ({
       id: v.id,
       name: v.name,
       voiceId: v.voice_id,
@@ -79,14 +83,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     // 第1页：预设+克隆混合；后续页：仅克隆
     const items = page === 1 ? [...presetItems, ...clonedItems] : clonedItems;
-    const total = PRESET_VOICES.length + clonedTotal;
+    // 当 page > 1 时，预设音色不出现在列表中，total 和 totalPages 应仅计算克隆数据
+    const totalAll = page === 1 ? PRESET_VOICES.length + total : total;
 
     return NextResponse.json({
       items,
-      total,
+      total: totalAll,
       page,
       pageSize,
-      totalPages: Math.ceil(total / pageSize),
+      totalPages: Math.max(1, Math.ceil(totalAll / pageSize)),
     });
   } catch (error) {
     return handleApiError(error);

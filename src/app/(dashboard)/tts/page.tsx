@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "../../components/ui/button";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { PRESET_VOICES } from "@/lib/preset-voices";
 
 // ── Types ──
 
@@ -30,17 +31,11 @@ function formatTimestamp(ms: number): string {
   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
 }
 
-// ── Preset voice metadata (matches preset-voices.ts) ──
+// ── 预设音色元数据（从 preset-voices.ts 生成映射） ──
 
-const PRESET_META: Record<string, string> = {
-  Cherry: "阳光积极小姐姐（中英双语）",
-  Serena: "温柔亲切的年轻女声（中文）",
-  Ethan: "阳光温暖男声（中英双语）",
-  Chelsie: "国际化女声（英语）",
-  Dylan: "年轻北京男声，清晰自然（北京话）",
-  Jada: "沉稳大气的女声",
-  Sunny: "活泼可爱的女声（四川话）",
-};
+const PRESET_META: Record<string, string> = Object.fromEntries(
+  PRESET_VOICES.map((v) => [v.voice_id, v.description])
+);
 
 // ── Component ──
 

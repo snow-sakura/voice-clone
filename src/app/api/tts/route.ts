@@ -1,19 +1,42 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import { getDashScopeClient, DashScopeError } from "../../../lib/dashscope";
-import { saveAudioToLocal } from "../../../lib/audio-helpers";
+import { getDashScopeClient } from "@/lib/dashscope";
+import { saveAudioToLocal } from "@/lib/audio-helpers";
+import { getCurrentUser } from "@/lib/auth";
+import { createActivity } from "@/db/queries";
+import { handleApiError } from "@/lib/api-helpers";
+import { checkRateLimit, getClientIdentifier, RATE_LIMITS } from "@/lib/rate-limiter";
 
 // ── POST handler ──
 
 export async function POST(request: NextRequest) {
   try {
+    // 验证用户登录
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json({ error: "请先登录" }, { status: 401 });
+    }
+
+    // 速率限制检查
+    const clientId = getClientIdentifier(request);
+    const rateLimitKey = `tts:${clientId}:${user.id}`;
+    const rateLimitResult = checkRateLimit(rateLimitKey, RATE_LIMITS.tts);
+
+    if (!rateLimitResult.success) {
+      const waitSeconds = Math.ceil((rateLimitResult.resetAt - Date.now()) / 1000);
+      return NextResponse.json(
+        { error: `请求过于频繁，请 ${waitSeconds} 秒后再试` },
+        { status: 429 }
+      );
+    }
+
     // ── Parse body ──
     let body: Record<string, unknown>;
     try {
       body = await request.json();
     } catch {
       return NextResponse.json(
-        { error: "Invalid JSON body" },
+        { error: "无效的请求体" },
         { status: 400 },
       );
     }
@@ -22,7 +45,15 @@ export async function POST(request: NextRequest) {
     const input = body.input;
     if (typeof input !== "string" || input.trim().length === 0) {
       return NextResponse.json(
-        { error: "Field 'input' is required and must be a non-empty string" },
+        { error: "文本内容不能为空" },
+        { status: 400 },
+      );
+    }
+
+    // 文本长度限制
+    if (input.trim().length > 5000) {
+      return NextResponse.json(
+        { error: "文本长度不能超过 5000 字符" },
         { status: 400 },
       );
     }
@@ -30,7 +61,7 @@ export async function POST(request: NextRequest) {
     const voice = body.voice;
     if (typeof voice !== "string" || voice.trim().length === 0) {
       return NextResponse.json(
-        { error: "Field 'voice' is required and must be a non-empty string" },
+        { error: "请选择音色" },
         { status: 400 },
       );
     }
@@ -40,7 +71,7 @@ export async function POST(request: NextRequest) {
     if (body.model !== undefined) {
       if (typeof body.model !== "string") {
         return NextResponse.json(
-          { error: "Field 'model' must be a string" },
+          { error: "模型参数无效" },
           { status: 400 },
         );
       }
@@ -58,7 +89,7 @@ export async function POST(request: NextRequest) {
     if (body.languageType !== undefined) {
       if (typeof body.languageType !== "string") {
         return NextResponse.json(
-          { error: "Field 'languageType' must be a string" },
+          { error: "语言类型参数无效" },
           { status: 400 },
         );
       }
@@ -74,9 +105,15 @@ export async function POST(request: NextRequest) {
       languageType,
     });
 
-    // ── Save audio to local public/tts_output directory ──
+    // ── Save audio to secure directory ──
     const filename = `${randomUUID()}.wav`;
     const audioUrl = await saveAudioToLocal(audioBuffer, filename);
+
+    // 记录活动
+    await createActivity(user.id, "tts", `生成语音：${input.trim().slice(0, 50)}...`, {
+      voice: voice.trim(),
+      textLength: input.trim().length,
+    });
 
     // ── Return success ──
     return NextResponse.json({
@@ -84,14 +121,6 @@ export async function POST(request: NextRequest) {
       audioUrl,
     });
   } catch (error) {
-    console.error("POST /api/tts error:", error);
-
-    const message =
-      error instanceof Error ? error.message : "Internal server error";
-
-    const status =
-      error instanceof DashScopeError ? error.status : 500;
-
-    return NextResponse.json({ error: message }, { status });
+    return handleApiError(error);
   }
 }

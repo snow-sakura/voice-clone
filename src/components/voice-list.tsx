@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
 
@@ -269,24 +269,48 @@ export function VoiceList() {
   const [data, setData] = useState<PageData | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState<number | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0); // 用于强制刷新
 
-  const fetchVoices = useCallback(async (t: TabType, p: number) => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({ tab: t, page: String(p), pageSize: String(PAGE_SIZE) });
-      const res = await fetch(`/api/voices?${params}`);
-      if (!res.ok) throw new Error("获取音色列表失败");
-      setData(await res.json());
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "获取音色列表失败");
-    } finally {
-      setLoading(false);
-    }
+  // 使用 ref 跟踪组件挂载状态，避免在卸载后更新状态
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
   }, []);
 
   useEffect(() => {
-    fetchVoices(tab, page);
-  }, [tab, page, fetchVoices]);
+    let cancelled = false;
+
+    async function fetchVoices() {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({ tab, page: String(page), pageSize: String(PAGE_SIZE) });
+        const res = await fetch(`/api/voices?${params}`);
+        if (!res.ok) throw new Error("获取音色列表失败");
+        const json = await res.json();
+        if (!cancelled && isMountedRef.current) {
+          setData(json);
+        }
+      } catch (err) {
+        if (!cancelled && isMountedRef.current) {
+          toast.error(err instanceof Error ? err.message : "获取音色列表失败");
+        }
+      } finally {
+        if (!cancelled && isMountedRef.current) {
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchVoices();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [tab, page, refreshKey]);
 
   const handleTabChange = (t: TabType) => {
     setTab(t);
@@ -305,7 +329,8 @@ export function VoiceList() {
       if (data && data.items.length <= 1 && page > 1) {
         setPage(page - 1);
       } else {
-        fetchVoices(tab, page);
+        // 强制刷新数据
+        setRefreshKey(k => k + 1);
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "删除失败");

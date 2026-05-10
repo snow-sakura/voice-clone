@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
-import { NavBar } from "../components/navbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,21 +26,10 @@ export default function RootLayout({
   return (
     <html
       lang="zh-CN"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background">
-        <NavBar />
-        <main className="flex-1 flex flex-col">{children}</main>
-
-        {/* Footer */}
-        <footer className="border-t border-border/60 py-8">
-          <div className="mx-auto max-w-6xl px-6 text-center text-xs text-muted-foreground/60">
-            <p>
-              基于阿里云百炼 DashScope AI 驱动 &middot; 本地部署 &middot;
-              数据安全
-            </p>
-          </div>
-        </footer>
+        {children}
 
         <Toaster
           position="top-center"

@@ -8,6 +8,13 @@
       "when": 1778241144658,
       "tag": "0000_migrate_to_zhipu",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1778333978675,
+      "tag": "0001_add_auth_tables",
+      "breakpoints": true
     }
   ]
 }

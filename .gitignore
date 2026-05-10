@@ -35,9 +35,19 @@ yarn-error.log*
 
 # local data
 data/*
+
+# 安全文件存储（非 public）
+/uploads/*
+/tts_output/*
+!.gitkeep
+
+# 遗留的 public 目录文件
 public/uploads/*
 public/tts_output/*
-!.gitkeep
+
+# design references
+/readdy/
+/screenshots/
 
 # vercel
 .vercel
