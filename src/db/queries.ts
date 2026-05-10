@@ -8,6 +8,7 @@ export async function createVoice(
   audioFilePath: string,
   userId?: number,
 ) {
+  const now = new Date().toISOString();
   const [voice] = await db
     .insert(clonedVoices)
     .values({
@@ -16,6 +17,8 @@ export async function createVoice(
       audio_file_path: audioFilePath,
       status: "pending",
       user_id: userId ?? null,
+      created_at: now,
+      updated_at: now,
     })
     .returning();
 
@@ -103,12 +106,15 @@ export async function createUser(
   passwordHash: string,
   name?: string,
 ) {
+  const now = new Date().toISOString();
   const [user] = await db
     .insert(users)
     .values({
       email,
       password_hash: passwordHash,
       name: name ?? null,
+      created_at: now,
+      updated_at: now,
     })
     .returning();
 
@@ -147,6 +153,7 @@ export async function createSession(userId: number, token: string, expiresAt: st
       user_id: userId,
       token,
       expires_at: expiresAt,
+      created_at: new Date().toISOString(),
     })
     .returning();
 
@@ -186,6 +193,7 @@ export async function createActivity(
       type,
       description,
       metadata: metadata ? JSON.stringify(metadata) : null,
+      created_at: new Date().toISOString(),
     })
     .returning();
 

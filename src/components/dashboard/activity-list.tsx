@@ -75,6 +75,8 @@ const ACTIVITY_CONFIG: Record<
 function formatRelativeTime(dateStr: string): string {
   try {
     const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffSec = Math.floor(diffMs / 1000);

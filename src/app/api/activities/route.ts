@@ -32,14 +32,24 @@ export async function GET(request: NextRequest) {
       getActivityCountByUserId(user.id),
     ]);
 
-    // 格式化返回数据
-    const formattedItems = items.map((item) => ({
-      id: item.id,
-      type: item.type,
-      description: item.description,
-      metadata: item.metadata,
-      createdAt: item.created_at,
-    }));
+    // 格式化返回数据，统一日期格式
+    const formattedItems = items.map((item) => {
+      let createdAt = null;
+      if (item.created_at) {
+        // 兼容两种格式：ISO 8601 和 SQLite datetime (YYYY-MM-DD HH:MM:SS)
+        const normalized = item.created_at.includes("T")
+          ? item.created_at
+          : item.created_at.replace(" ", "T") + "Z";
+        createdAt = new Date(normalized).toISOString();
+      }
+      return {
+        id: item.id,
+        type: item.type,
+        description: item.description,
+        metadata: item.metadata,
+        createdAt,
+      };
+    });
 
     return NextResponse.json({
       items: formattedItems,
