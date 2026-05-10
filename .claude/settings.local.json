@@ -73,7 +73,15 @@
       "Bash(grep *)",
       "Bash(git *)",
       "Bash(file *)",
-      "Bash(node *)"
+      "Bash(node *)",
+      "Read(//Users/snow-sakura/sakura/**)",
+      "Read(//Users/snow-sakura/**)",
+      "Bash(python3 -c \"from PIL import Image; print\\('PIL available'\\)\")",
+      "Bash(brew list *)",
+      "Bash(python3 -c \"import sys; print\\(sys.version\\)\")",
+      "Bash(pip3 install *)",
+      "Bash(python3 *)",
+      "Bash(xxd)"
     ]
   }
 }

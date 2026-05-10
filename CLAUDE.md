@@ -4,9 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 工作流程
 
-在项目根目录下有一个todo文件，每次在开发之前，都应该先将商量好的代办任务添加到这个文件中。每完成一个任务时，记得把对应的任务标记为已完成，方便实时跟踪开发进度。
-
-合理使用Task工具创建多个子代理来提高开发的效率，每个子代理负责一个独立的任务，互不干扰，支持并行开发。
+使用 Task 工具创建多个子代理来提高开发效率，每个子代理负责一个独立的任务，互不干扰，支持并行开发。
 
 ## 常用命令
 
@@ -70,7 +68,7 @@ npx drizzle-kit push # 应用数据库迁移到 SQLite
 | `activities` | 活动记录（type: clone/tts/delete_voice/login/register, metadata JSON） |
 | `cloned_voices` | 克隆音色（user_id FK→users, voice_id 百炼唯一标识, status pending/completed/failed） |
 
-迁移文件位于 `./drizzle/`，配置 `drizzle.config.ts`。`db:push` 后需手动执行 SQL 补列。
+迁移文件位于 `./drizzle/`，配置 `drizzle.config.ts`。
 
 ## 百炼 API 流程
 
@@ -127,6 +125,7 @@ npx drizzle-kit push # 应用数据库迁移到 SQLite
 - **音色列表混合逻辑**：`GET /api/voices?tab=all` 时第1页返回「预设+克隆」混合，后续页仅克隆。`tab=preset` 不分页。第1页的 total 包含预设数量。
 - **VoiceList 组件**：通过 `VoiceItem.source` 区分 `"cloned"` vs `"preset"`，预设音色 `id: null`，删除按钮仅对已克隆音色显示。
 - **数据库兼容**：`getVoicesByUserId` 同时查询 `user_id = $userId OR NULL` 以兼容旧数据。
+- **Drizzle datetime 默认值**：`default("(datetime('now'))")` 会被 Drizzle 加单引号当字符串字面量存储，导致 `created_at` 存的是 `(datetime('now'))` 字符串。必须用 `default(sql`(datetime('now'))`)` 传 SQL 表达式。同时在 `queries.ts` 的 insert 中显式传入 `created_at: new Date().toISOString()` 最为稳妥。
 
 ## 项目约定
 
