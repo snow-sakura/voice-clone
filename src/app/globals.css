@@ -58,124 +58,65 @@
   --radius-3xl: calc(var(--radius) * 2.5);
 }
 
-/* ── Light theme (warm, premium) ── */
+/* ── Readdy 中性深色主题 ── */
 
 :root {
   --radius: 0.75rem;
 
-  /* Surfaces */
-  --background: oklch(0.985 0.002 95);
-  --foreground: oklch(0.18 0.01 95);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.01 95);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.01 95);
+  /* 表面层次 — 极深中性黑 */
+  --background: oklch(0.125 0.003 260);
+  --foreground: oklch(0.98 0 0);
+  --card: oklch(0.145 0.003 260);
+  --card-foreground: oklch(0.98 0 0);
+  --popover: oklch(0.16 0.003 260);
+  --popover-foreground: oklch(0.98 0 0);
 
-  /* Primary — rich purple */
-  --primary: oklch(0.48 0.19 285);
-  --primary-foreground: oklch(0.99 0 0);
+  /* 主色 — 中性白/灰，几乎无色相 */
+  --primary: oklch(0.98 0 0);
+  --primary-foreground: oklch(0.13 0.003 260);
 
-  /* Secondary — warm gray */
-  --secondary: oklch(0.96 0.003 95);
-  --secondary-foreground: oklch(0.25 0.01 95);
+  /* 次要色 */
+  --secondary: oklch(0.19 0.003 260);
+  --secondary-foreground: oklch(0.95 0 0);
 
-  /* Muted */
-  --muted: oklch(0.965 0.003 95);
-  --muted-foreground: oklch(0.5 0.01 95);
+  /* 柔和色 */
+  --muted: oklch(0.19 0.003 260);
+  --muted-foreground: oklch(0.55 0.005 260);
 
-  /* Accent — purple */
-  --accent: oklch(0.94 0.03 290);
-  --accent-foreground: oklch(0.35 0.15 285);
+  /* 强调色 — 极微妙蓝灰 */
+  --accent: oklch(0.22 0.01 260);
+  --accent-foreground: oklch(0.88 0.005 260);
 
-  /* Destructive */
-  --destructive: oklch(0.55 0.2 20);
-
-  /* Borders & inputs */
-  --border: oklch(0.91 0.008 95);
-  --input: oklch(0.91 0.008 95);
-  --ring: oklch(0.55 0.18 285);
-
-  /* Semantic colors */
-  --success: oklch(0.62 0.16 160);
-  --success-foreground: oklch(0.99 0 0);
-  --warning: oklch(0.7 0.14 85);
-  --warning-foreground: oklch(0.2 0.02 85);
-
-  /* Charts */
-  --chart-1: oklch(0.55 0.18 285);
-  --chart-2: oklch(0.6 0.16 260);
-  --chart-3: oklch(0.65 0.15 200);
-  --chart-4: oklch(0.5 0.18 310);
-  --chart-5: oklch(0.7 0.14 340);
-
-  /* Sidebar */
-  --sidebar: oklch(0.99 0.001 95);
-  --sidebar-foreground: oklch(0.18 0.01 95);
-  --sidebar-primary: oklch(0.48 0.19 285);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.96 0.003 95);
-  --sidebar-accent-foreground: oklch(0.25 0.01 95);
-  --sidebar-border: oklch(0.91 0.008 95);
-  --sidebar-ring: oklch(0.55 0.18 285);
-}
-
-/* ── Dark theme (deep purple, rich) ── */
-
-.dark {
-  /* Surfaces */
-  --background: oklch(0.13 0.015 285);
-  --foreground: oklch(0.92 0.005 95);
-  --card: oklch(0.17 0.012 285);
-  --card-foreground: oklch(0.92 0.005 95);
-  --popover: oklch(0.17 0.012 285);
-  --popover-foreground: oklch(0.92 0.005 95);
-
-  /* Primary — vibrant purple */
-  --primary: oklch(0.62 0.19 285);
-  --primary-foreground: oklch(0.13 0.02 285);
-
-  /* Secondary */
-  --secondary: oklch(0.22 0.015 285);
-  --secondary-foreground: oklch(0.88 0.005 95);
-
-  /* Muted */
-  --muted: oklch(0.21 0.012 285);
-  --muted-foreground: oklch(0.6 0.01 95);
-
-  /* Accent */
-  --accent: oklch(0.25 0.06 290);
-  --accent-foreground: oklch(0.85 0.04 290);
-
-  /* Destructive */
+  /* 破坏色 */
   --destructive: oklch(0.6 0.2 20);
 
-  /* Borders & inputs */
-  --border: oklch(0.25 0.015 285);
-  --input: oklch(0.22 0.015 285);
-  --ring: oklch(0.58 0.18 285);
+  /* 边框 & 输入 */
+  --border: oklch(0.24 0.003 260);
+  --input: oklch(0.22 0.003 260);
+  --ring: oklch(0.65 0.005 260);
 
-  /* Semantic */
+  /* 语义色 */
   --success: oklch(0.55 0.14 160);
-  --success-foreground: oklch(0.13 0.02 285);
+  --success-foreground: oklch(0.98 0 0);
   --warning: oklch(0.6 0.12 85);
-  --warning-foreground: oklch(0.13 0.02 285);
+  --warning-foreground: oklch(0.13 0.003 260);
 
-  /* Charts */
-  --chart-1: oklch(0.62 0.18 285);
-  --chart-2: oklch(0.6 0.15 260);
-  --chart-3: oklch(0.65 0.12 200);
-  --chart-4: oklch(0.58 0.16 310);
-  --chart-5: oklch(0.65 0.13 350);
+  /* 图表色 — 微弱的色彩区分 */
+  --chart-1: oklch(0.7 0.01 260);
+  --chart-2: oklch(0.6 0.01 250);
+  --chart-3: oklch(0.65 0.01 210);
+  --chart-4: oklch(0.55 0.01 280);
+  --chart-5: oklch(0.75 0.01 200);
 
-  /* Sidebar - 深色侧边栏 */
-  --sidebar: oklch(0.11 0.018 285);
-  --sidebar-foreground: oklch(0.92 0.005 95);
-  --sidebar-primary: oklch(0.62 0.19 285);
-  --sidebar-primary-foreground: oklch(0.13 0.02 285);
-  --sidebar-accent: oklch(0.18 0.015 285);
-  --sidebar-accent-foreground: oklch(0.88 0.005 95);
-  --sidebar-border: oklch(0.22 0.015 285);
-  --sidebar-ring: oklch(0.58 0.18 285);
+  /* 侧边栏 — 比背景稍暗 */
+  --sidebar: oklch(0.11 0.003 260);
+  --sidebar-foreground: oklch(0.95 0 0);
+  --sidebar-primary: oklch(0.98 0 0);
+  --sidebar-primary-foreground: oklch(0.13 0.003 260);
+  --sidebar-accent: oklch(0.17 0.003 260);
+  --sidebar-accent-foreground: oklch(0.9 0 0);
+  --sidebar-border: oklch(0.19 0.003 260);
+  --sidebar-ring: oklch(0.65 0.005 260);
 }
 
 /* ── Base ── */
@@ -206,12 +147,7 @@
 /* ── Glass effect CSS variables ── */
 
 :root {
-  --glass-bg: oklch(1 0 0 / 0.7);
-  --glass-border: oklch(0 0 0 / 0.06);
-}
-
-.dark {
-  --glass-bg: oklch(0.15 0.015 275 / 0.75);
+  --glass-bg: oklch(0.15 0.003 260 / 0.75);
   --glass-border: oklch(1 0 0 / 0.05);
 }
 
@@ -224,7 +160,7 @@
 }
 
 @utility text-gradient {
-  background: linear-gradient(135deg, oklch(0.48 0.19 285), oklch(0.55 0.2 310), oklch(0.5 0.18 265));
+  background: linear-gradient(135deg, oklch(0.9 0 0), oklch(0.75 0.005 260), oklch(0.85 0.003 250));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -246,7 +182,7 @@
     inset: 0;
     border-radius: inherit;
     padding: 1px;
-    background: linear-gradient(135deg, oklch(0.55 0.18 285 / 0.4), oklch(0.6 0.16 310 / 0.4), oklch(0.5 0.16 265 / 0.4));
+    background: linear-gradient(135deg, oklch(0.5 0.005 260 / 0.3), oklch(0.6 0.005 250 / 0.3), oklch(0.45 0.003 270 / 0.3));
     -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
