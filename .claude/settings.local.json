@@ -81,7 +81,8 @@
       "Bash(python3 -c \"import sys; print\\(sys.version\\)\")",
       "Bash(pip3 install *)",
       "Bash(python3 *)",
-      "Bash(xxd)"
+      "Bash(xxd)",
+      "Bash(open *)"
     ]
   }
 }
